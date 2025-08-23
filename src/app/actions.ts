@@ -43,11 +43,33 @@ export async function addTodo(formData: FormData) {
 }
 
 export async function reorderTodos(newOrderIds: string[]) {
-  // Assign new sequential positions starting at 0
-  const updates = newOrderIds.map((id, index) => ({ id, position: index }));
-  // Use a transaction via RPC function if defined; fallback to multiple updates
-  const { error } = await getSupabase().from("todos").upsert(updates, { onConflict: "id" });
-  if (error) throw error;
+  const supabase = getSupabase();
+  // Filter out any temporary client-only ids (e.g., optimistic temp-*) and non-UUID values
+  const uuidIds = newOrderIds.filter((id) => /^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$/.test(id));
+  if (uuidIds.length === 0) return { ok: true } as const;
+
+  // Try RPC function first (if created in DB); ignore if it errors with not found
+  let rpcTried = false;
+  try {
+    rpcTried = true;
+    const { error: rpcErr } = await supabase.rpc("reorder_todos", { ids: uuidIds });
+    if (!rpcErr) {
+      revalidatePath("/");
+      return { ok: true } as const;
+    }
+  } catch {
+    // fall through to manual updates
+  }
+
+  // Manual updates: assign sequential positions
+  await Promise.all(
+    uuidIds.map((id, index) =>
+      supabase
+        .from("todos")
+        .update({ position: index })
+        .eq("id", id)
+    )
+  );
   revalidatePath("/");
   return { ok: true } as const;
 }

@@ -64,8 +64,12 @@ export function TodoApp({ initial }: Props) {
     const [moved] = current.splice(fromIdx, 1);
     current.splice(toIdx, 0, moved);
   startTransition(() => setOptimisticTodos(current));
-    // Persist order (filter out any temp ids after server refresh it will correct)
-    reorderTodos(current.map((t) => t.id));
+    // Persist order: exclude optimistic temp-* ids to avoid server errors
+    const stableIds = current.map(t => t.id).filter(id => !id.startsWith('temp-'));
+    // Debounce by using a micro-task (prevents multiple rapid drops stacking)
+    queueMicrotask(() => {
+      if (stableIds.length) reorderTodos(stableIds);
+    });
   }
 
   async function onToggle(id: string) {
