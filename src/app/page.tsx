@@ -10,11 +10,11 @@ export default async function Home() {
       <div className="max-w-lg mx-auto flex flex-col gap-8">
         <header className="flex flex-col gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">Todos</h1>
-          <p className="text-sm text-neutral-400">Add, drag to reorder. Stored locally in CSV.</p>
+          <p className="text-sm text-neutral-400">Add, drag to reorder.</p>
         </header>
         <TodoApp initial={todos} />
         <footer className="pt-8 mt-auto text-center text-[11px] text-neutral-500">
-          <p>Data persists in <code>todos.csv</code> at project root.</p>
+          <p>Data persists in supabase.</p>
         </footer>
       </div>
     </main>

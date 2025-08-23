@@ -19,22 +19,26 @@ export function TodoApp({ initial }: Props) {
     initial,
     (_current: Todo[], next: Todo[]) => next
   );
-  const [isPending, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition(); // still available if you want to show subtle state later
   const formRef = useRef<HTMLFormElement>(null);
 
   async function onAdd(formData: FormData) {
+    const text = (formData.get("text") || "").toString().trim();
+    if (!text) return;
+    // Optimistic add immediately
     startTransition(() => {
-      const text = (formData.get("text") || "").toString().trim();
-      if (!text) return;
-      // temp id for optimistic render; choose position one less than current min
       const minPos = optimisticTodos.length
         ? Math.min(...optimisticTodos.map(t => t.position ?? 0))
         : 0;
       const temp: Todo = { id: `temp-${Date.now()}`, text, completed: false, position: minPos - 1 };
       setOptimisticTodos([temp, ...optimisticTodos]);
     });
-    await addTodo(formData); // server action
+    // Clear input instantly for snappy UX
     formRef.current?.reset();
+    // Fire server action without awaiting to avoid blocking UI reset
+    addTodo(formData).catch(() => {
+      // Optional: could rollback or show an error toast here
+    });
   }
 
   // Drag state handling
@@ -107,11 +111,8 @@ export function TodoApp({ initial }: Props) {
         />
         <button
           type="submit"
-            className="rounded-md bg-neutral-100 text-neutral-900 text-sm px-4 py-2 font-medium hover:bg-white disabled:opacity-50"
-          disabled={isPending}
-        >
-          Add
-        </button>
+          className="rounded-md bg-neutral-100 text-neutral-900 text-sm px-4 py-2 font-medium hover:bg-white"
+        >Add</button>
       </form>
       <ul className="flex flex-col gap-2" aria-live="polite">
         {optimisticTodos.length === 0 && (
