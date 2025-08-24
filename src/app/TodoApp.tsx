@@ -363,6 +363,18 @@ export function TodoApp({ initial }: Props) {
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
           }
+          
+          /* Prevent iOS drag preview and selection */
+          [draggable="true"] {
+            -webkit-user-drag: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+          }
+          
+          /* Prevent iOS tap highlights */
+          * {
+            -webkit-tap-highlight-color: transparent;
+          }
         `
       }} />
       <div className={`w-full max-w-lg mx-auto flex flex-col gap-6 ${isDeleteMode ? 'relative' : ''}`}>
@@ -408,11 +420,21 @@ export function TodoApp({ initial }: Props) {
               onTouchStart={(e) => handleTouchStart(e, todo.id)}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
-              className={`group rounded-md border border-neutral-700 bg-neutral-900/50 px-3 py-2 text-sm text-neutral-100 flex items-center gap-3 cursor-grab active:cursor-grabbing hover:border-neutral-500 touch-none relative ${
+              onContextMenu={(e) => e.preventDefault()}
+              className={`group rounded-md border border-neutral-700 bg-neutral-900/50 px-3 py-2 text-sm text-neutral-100 flex items-center gap-3 cursor-grab active:cursor-grabbing hover:border-neutral-500 touch-none select-none relative ${
                 isDeleteMode ? 'z-50' : ''
               } ${
                 isDeleteMode && activeTodoId && activeTodoId !== todo.id ? 'opacity-50 pointer-events-none' : ''
               }`}
+              style={{
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none',
+                KhtmlUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none',
+                userSelect: 'none',
+                WebkitTapHighlightColor: 'transparent'
+              }}
             >
               <button
                 type="button"
@@ -427,9 +449,13 @@ export function TodoApp({ initial }: Props) {
                 {todo.completed ? "✓" : ""}
               </button>
               <span
-                className={`flex-1 whitespace-pre-wrap leading-snug ${
+                className={`flex-1 whitespace-pre-wrap leading-snug select-none ${
                   todo.completed ? "line-through text-neutral-500" : ""
                 }`}
+                style={{
+                  WebkitUserSelect: 'none',
+                  WebkitTouchCallout: 'none'
+                }}
               >
                 {todo.text}
               </span>
